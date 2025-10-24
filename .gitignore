@@ -1,0 +1,5 @@
+.env
+strava_tokens.json
+strava_activities_raw.json
+strava_activities.json
+.venv/*

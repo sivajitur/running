@@ -1,0 +1,11 @@
+{
+  "target_race": {
+    "date": "2025-12-31",
+    "distance": "marathon",
+    "goal_time": "03:45:00"
+  },
+  "weekly_mileage": 65,
+  "long_run_day": "Sunday",
+  "workouts_per_week": 2,
+  "experience_level": "intermediate"
+}
