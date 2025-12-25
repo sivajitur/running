@@ -1,9 +1,12 @@
 import streamlit as st
 import os
+import sys
 from datetime import datetime
-import ollama
-from analyze_runs import RunAnalyzer
-from fetch_strava import StravaAPI
+
+
+from utils.analyze_run import RunAnalyzer
+from utils.fetch_strava import StravaAPI
+from utils.parse_json import load_activities_data
 
 def initialize_session_state():
     if 'strava' not in st.session_state:
@@ -15,25 +18,14 @@ def initialize_session_state():
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
 
-def main():
+def show_page():
     st.title("🏃‍♂️ Running Coach AI")
     st.write("Your personal AI running coach powered by Strava data")
 
     initialize_session_state()
 
-    # Sidebar
+    # Sidebar for coach page specific options
     with st.sidebar:
-        st.header("Options")
-        days = st.slider("Days of history", 1, 30, 7)
-        if st.button("🔄 Refresh Strava Data"):
-            with st.spinner("Fetching fresh data from Strava..."):
-                try:
-                    st.session_state.activities = st.session_state.strava.get_recent_activities(days=days, force_refresh=True)
-                    st.success("Data refreshed successfully!")
-                except Exception as e:
-                    st.error(f"Error fetching data: {str(e)}")
-
-        st.markdown("---")
         st.markdown("""
         ### How to use
         1. Refresh your Strava data using the button above
@@ -46,7 +38,7 @@ def main():
     if st.session_state.activities is None:
         try:
             with st.spinner("Loading your running data..."):
-                st.session_state.activities = st.session_state.strava.get_recent_activities(days=days)
+                st.session_state.activities = st.session_state.strava.get_recent_activities(days=7)  # Default to 7 days
         except Exception as e:
             st.error(f"Error loading data: {str(e)}")
             return
@@ -55,7 +47,8 @@ def main():
     runs = [a for a in st.session_state.activities if a['type'] == 'Run']
     if runs:
         st.subheader("📊 Your Recent Runs")
-        #st.markdown(st.session_state.analyzer.format_runs_for_display(runs))
+        df = load_activities_data(runs)
+        st.dataframe(df.head(len(df) - 1))
     else:
         st.info("No running activities found in the selected time period.")
 
@@ -65,18 +58,11 @@ def main():
     
     # Display chat history
     for message in st.session_state.chat_history:
-        if message["role"] == "user":
-            st.markdown(f"🤔 **You:** {message['content']}")
-        else:
-            st.markdown(f"🤖 **Coach:** {message['content']}")
+        with st.chat_message(message["role"]):
+            st.markdown(message['content'])
     
     # User input
-    user_input = st.text_input(
-        "Ask about your running or get recommendations",
-        placeholder="e.g., 'What should my next run be?' or 'How am I progressing?'"
-    )
-
-    if st.button("Send") and user_input:
+    if user_input := st.chat_input("Ask about your running or get recommendations"):
         with st.spinner("Analyzing your running data..."):
             # Add user message to chat history
             st.session_state.chat_history.append({"role": "user", "content": user_input})
@@ -92,6 +78,3 @@ def main():
             
             # Rerun to update the display
             st.rerun()
-
-if __name__ == "__main__":
-    main()
