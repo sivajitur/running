@@ -2,4 +2,7 @@
 strava_tokens.json
 strava_activities_raw.json
 strava_activities.json
+strava_activities.csv
+strava_activities.*
 .venv/*
+__pycache__/.streamlit/secrets.toml
