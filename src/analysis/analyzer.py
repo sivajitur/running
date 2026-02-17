@@ -21,6 +21,9 @@ class RunningAnalyzer:
     
     def prepare_dataframe(self) -> None:
         """Add calculated columns to dataframe."""
+        # Ensure date is datetime type
+        self.runs_df['date'] = pd.to_datetime(self.runs_df['date'])
+        
         self.runs_df['day_of_week'] = self.runs_df['date'].dt.day_name()
         self.runs_df['day_abbr'] = self.runs_df['date'].dt.strftime('%a')
         self.runs_df['week'] = self.runs_df['date'].dt.isocalendar().week

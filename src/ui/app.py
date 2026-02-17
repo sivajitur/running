@@ -52,7 +52,43 @@ class StreamlitApp:
     
     @st.cache_data
     def load_data(_self):
-        """Load and prepare data."""
+        """Load and prepare data. If files don't exist, fetch from Strava."""
+        import os
+        
+        # Check if data files exist
+        csv_exists = os.path.exists(Settings.CSV_FILE)
+        json_exists = os.path.exists(Settings.JSON_FILE)
+        
+        # If no data files, fetch from Strava
+        if not csv_exists and not json_exists:
+            # Need to get token from session
+            if 'strava_token' not in st.session_state:
+                st.error("No data found and unable to fetch from Strava. Please authenticate first.")
+                st.stop()
+            
+            # Fetch from Strava
+            token_data = st.session_state.strava_token
+            from ..auth import StravaToken
+            token = StravaToken.from_dict(token_data)
+            
+            with st.spinner("📥 Fetching your activities from Strava..."):
+                try:
+                    from ..data import StravaClient
+                    client = StravaClient(token.access_token)
+                    activities = client.get_activities(months_back=12)
+                    
+                    # Convert to DataFrame and save
+                    df = DataProcessor.convert_activities_to_dataframe(activities)
+                    DataProcessor.save_csv(df)
+                    DataProcessor.save_json(activities)
+                    
+                    st.success(f"✅ Loaded {len(df)} activities from Strava!")
+                    return df
+                except Exception as e:
+                    st.error(f"❌ Failed to fetch activities: {str(e)}")
+                    st.stop()
+        
+        # Load from CSV if it exists
         df = DataProcessor.load_csv()
         return df
     

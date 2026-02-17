@@ -3,6 +3,7 @@ Data processing and transformation utilities.
 """
 
 import json
+import os
 import pandas as pd
 from typing import List, Dict, Any
 from ..config import Settings
@@ -77,9 +78,9 @@ class DataProcessor:
         
         for activity in activities:
             try:
-                # Parse date
+                # Parse date - keep as datetime
                 date_str = activity.get("start_date_local", "")
-                date = pd.to_datetime(date_str.replace("Z", "+00:00")).date()
+                date = pd.to_datetime(date_str.replace("Z", "+00:00"))
                 
                 # Get type
                 activity_type = activity.get("type", "Unknown")
@@ -132,13 +133,25 @@ class DataProcessor:
     def load_csv(filepath: str = Settings.CSV_FILE) -> pd.DataFrame:
         """
         Load activities from CSV file.
+        If file doesn't exist, returns empty DataFrame.
         
         Args:
             filepath: Path to CSV file
             
         Returns:
-            pd.DataFrame: Activities with proper data types
+            pd.DataFrame: Activities with proper data types, or empty DataFrame if file not found
         """
+        import os
+        
+        # Check if file exists
+        if not os.path.exists(filepath):
+            # Return empty DataFrame with expected columns
+            return pd.DataFrame(columns=[
+                'date', 'type', 'distance_miles', 'moving_time',
+                'pace_min_per_mile', 'average_heartrate_bpm',
+                'elevation_high_ft', 'elevation_low_ft'
+            ])
+        
         df = pd.read_csv(filepath)
         df['date'] = pd.to_datetime(df['date'])
         return df

@@ -11,12 +11,18 @@ from ..config import Settings
 class StravaClient:
     """Client for interacting with the Strava API."""
     
-    def __init__(self):
-        """Initialize the Strava client."""
+    def __init__(self, access_token: str = None):
+        """
+        Initialize the Strava client.
+        
+        Args:
+            access_token: Optional access token. If provided, use it directly.
+                         If not provided, will use refresh token from Settings.
+        """
         self.client_id = Settings.STRAVA_CLIENT_ID
         self.client_secret = Settings.STRAVA_CLIENT_SECRET
         self.refresh_token = Settings.STRAVA_REFRESH_TOKEN
-        self.access_token = None
+        self.access_token = access_token
         self.token_expires_at = None
         
     def get_access_token(self) -> str:
@@ -26,9 +32,13 @@ class StravaClient:
         Returns:
             str: Valid access token for Strava API
         """
-        # Check if we have a valid token
-        if self.access_token and self.token_expires_at and datetime.now().timestamp() < self.token_expires_at:
+        # If we have a directly provided access token, return it
+        if self.access_token:
             return self.access_token
+        
+        # If no refresh token available, raise error
+        if not self.refresh_token:
+            raise ValueError("No access token or refresh token available")
         
         # Refresh the token
         payload = {
