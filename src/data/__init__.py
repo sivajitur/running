@@ -2,5 +2,6 @@
 
 from .strava_client import StravaClient
 from .data_processor import DataProcessor
+from . import database
 
-__all__ = ["StravaClient", "DataProcessor"]
+__all__ = ["StravaClient", "DataProcessor", "database"]

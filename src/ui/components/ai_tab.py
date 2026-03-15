@@ -3,12 +3,12 @@ AI tab component for asking questions about running data.
 """
 
 import streamlit as st
-from ...analysis import PerplexityClient
+from ...analysis import ClaudeClient
 
 
 class AITabComponent:
-    """Perplexity AI integration tab."""
-    
+    """Claude AI integration tab."""
+
     EXAMPLE_QUESTIONS = [
         "What day of the week do I run the most?",
         "How has my average heart rate changed over time?",
@@ -17,24 +17,24 @@ class AITabComponent:
         "Compare my running performance in December vs January",
         "What's my typical run distance and should I push longer?",
     ]
-    
+
     @staticmethod
     def render(data_context: str) -> None:
         """
         Render the AI tab.
-        
+
         Args:
             data_context: Context string with running data
         """
-        st.subheader("💬 Ask Perplexity About Your Running")
-        
+        st.subheader("💬 Ask AI About Your Running")
+
         st.markdown("""
         Ask questions about your running performance, training insights, or get personalized advice.
         The AI assistant has access to your entire running data context.
         """)
-        
-        client = PerplexityClient()
-        
+
+        client = ClaudeClient()
+
         if not client.is_configured():
             st.warning(
                 "⚠️ Perplexity API key not configured. "

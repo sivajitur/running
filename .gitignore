@@ -1,8 +1,22 @@
+# Environment & secrets
 .env
+.streamlit/secrets.toml
+
+# Strava data & PII
 strava_tokens.json
-strava_activities_raw.json
 strava_activities.json
+strava_activities_raw.json
 strava_activities.csv
 strava_activities.*
-.venv/*
-__pycache__/.streamlit/secrets.toml
+running.db
+*.db
+
+# Python
+.venv/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# macOS
+.DS_Store
+**/.DS_Store
