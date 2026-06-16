@@ -13,6 +13,13 @@ This project pulls your running data from the Strava API, stores it locally, vis
   <img alt="License" src="https://img.shields.io/badge/License-MIT-green">
 </p>
 
+<!--
+  📸 SCREENSHOT: drop a dashboard image at docs/dashboard.png, then delete this
+  comment and uncomment the line below. (Drag-and-drop into the GitHub README
+  editor also works and will auto-upload the image.)
+-->
+<!-- <p align="center"><img src="docs/dashboard.png" alt="Running Analytics dashboard" width="800"></p> -->
+
 ---
 
 ## ✨ What makes this interesting
