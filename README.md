@@ -1,301 +1,170 @@
-# Running Analytics 🏃
+# 🏃 Running Analytics + AI Marathon Coach
 
-A modular, production-ready Python application for analyzing Strava running data with AI insights.
+> Turn your Strava history into an interactive analytics dashboard **and** a personal marathon coach you can talk to inside Claude.
 
-## 📁 Project Structure
+This project pulls your running data from the Strava API, stores it locally, visualizes it in a clean Streamlit dashboard, and — the fun part — exposes it to AI as a set of [Model Context Protocol (MCP)](https://modelcontextprotocol.io) tools. Ask Claude *"how's my long-run progression looking for race day?"* and it queries your actual training data before answering.
 
+<p align="left">
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white">
+  <img alt="Streamlit" src="https://img.shields.io/badge/Streamlit-dashboard-FF4B4B?logo=streamlit&logoColor=white">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-server-000000">
+  <img alt="Strava" src="https://img.shields.io/badge/Strava-API-FC4C02?logo=strava&logoColor=white">
+  <img alt="SQLite" src="https://img.shields.io/badge/SQLite-persistence-003B57?logo=sqlite&logoColor=white">
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-green">
+</p>
+
+---
+
+## ✨ What makes this interesting
+
+Most Strava projects stop at a dashboard. This one does two things well:
+
+1. **A polished analytics dashboard** — OAuth login, interactive Plotly charts, and filtering across your entire running history.
+2. **An MCP server that makes your data conversational** — instead of reading charts, you *ask questions*. The MCP server gives Claude (or any MCP client) typed tools to query your runs, so the AI grounds every answer in your real numbers instead of guessing.
+
+The codebase is intentionally built like production software: a layered architecture, OAuth with automatic token refresh, a SQLite persistence layer, and a clean separation between data, analysis, and UI.
+
+---
+
+## 🎬 Two ways to use it
+
+### 1. The Streamlit dashboard
+
+```bash
+streamlit run app.py
 ```
-running_analytics/
-├── config/                 # Configuration management
-│   ├── __init__.py
-│   └── settings.py        # Centralized settings and environment variables
-│
-├── data/                  # Data collection and processing
-│   ├── __init__.py
-│   ├── strava_client.py   # Strava API client
-│   └── data_processor.py  # Data transformation and utilities
-│
-├── analysis/              # Analysis and AI
-│   ├── __init__.py
-│   ├── analyzer.py        # Running data analytics
-│   └── ai_client.py       # Perplexity AI integration
-│
-└── ui/                    # User interface (Streamlit)
-    ├── __init__.py
-    ├── app.py             # Main Streamlit application
-    └── components/        # Reusable UI components
-        ├── __init__.py
-        ├── metrics.py     # Metric display components
-        ├── charts.py      # Chart and visualization components
-        └── ai_tab.py      # AI assistant tab
-```
+
+- 🔐 **One-click Strava OAuth** — log in with your own Strava account; tokens refresh automatically
+- 📈 **Distance over time** — grouped by day, week, or month
+- 🗓️ **Day-of-week analysis** — find out which days you actually train
+- 📋 **Sortable run log** with pace, heart rate, and elevation — exportable to CSV
+- 📉 **Distribution & heart-rate-vs-distance** scatter plots
+- 💬 **In-app AI coaching tab** that answers questions using your data as context
+
+### 2. The MCP server (the cool part)
+
+Add the server to Claude Desktop and your running history becomes a set of tools the model can call:
+
+| Tool | What it does |
+|------|--------------|
+| `sync_from_strava` | Pull the latest activities from Strava into the local DB |
+| `get_recent_runs` | Most recent runs with pace, HR, and elevation |
+| `get_runs_in_range` | Every run between two dates |
+| `get_long_runs` | Runs over a distance threshold — track long-run progression |
+| `get_run_detail` | Full splits, cadence, calories, and suffer score for one run |
+| `get_training_summary` | Total mileage, average pace, and heart-rate trends |
+| `get_weekly_mileage_trend` | Week-by-week mileage to judge ramp rate and taper |
+| `get_db_status` | How much data is stored and how fresh it is |
+
+Now you can ask Claude things like:
+
+> *"Compare my average pace over the last 4 weeks to the month before — am I getting faster?"*
+> *"Is my weekly mileage ramping too aggressively for a March marathon?"*
+> *"Pull my longest run this month and break down the splits."*
+
+Claude calls the tools, reads your real data, and coaches you on it.
+
+---
 
 ## 🏗️ Architecture
 
-### **Config Layer** (`config/`)
-Centralized configuration management for all API keys and settings.
-- Single source of truth for environment variables
-- Easy to extend with new settings
+A clean, layered design with one-directional dependencies — easy to extend (swap Strava for Garmin, add a new chart, plug in a different AI provider).
 
-### **Data Layer** (`data/`)
-Handles all data collection and processing operations.
-- `StravaClient`: OAuth token management and API communication
-- `DataProcessor`: Unit conversions, DataFrame creation, CSV/JSON export
+```
+running_mcp/
+├── app.py                  # Streamlit entry point
+├── mcp_server.py           # MCP server — exposes running data as AI tools
+└── src/
+    ├── config/             # Centralized settings & env/secrets handling
+    ├── auth/               # Strava OAuth handler + token model
+    ├── data/
+    │   ├── strava_client.py    # Strava API client (pagination, refresh)
+    │   ├── database.py         # SQLite persistence layer
+    │   └── data_processor.py   # Unit conversions, DataFrame & exports
+    ├── analysis/
+    │   ├── analyzer.py         # Stats, filtering, weekly aggregation
+    │   └── ai_client.py        # AI coaching client + context builder
+    └── ui/
+        ├── app.py              # Dashboard orchestration
+        ├── pages/auth.py       # Login flow
+        └── components/         # metrics, charts, AI tab
+```
 
-### **Analysis Layer** (`analysis/`)
-Business logic for analyzing running data and AI interactions.
-- `RunningAnalyzer`: Statistical analysis and filtering
-- `PerplexityClient`: AI assistant integration
+**Highlights for the curious:**
+- **OAuth done right** — authorization-code flow, token persistence, and automatic refresh when the access token expires.
+- **Local-first persistence** — activities are upserted into SQLite so the dashboard loads instantly and the MCP server works offline between syncs.
+- **Typed MCP tools** — built on `FastMCP`, each tool has a docstring the model reads to decide when and how to call it.
 
-### **UI Layer** (`ui/`)
-Streamlit-based user interface with modular components.
-- `StreamlitApp`: Main application orchestration
-- Reusable components for metrics, charts, and AI tab
+---
 
-## 🚀 Quick Start
-
-### Installation
+## 🚀 Quick start
 
 ```bash
-# Clone and navigate to the project
-cd running_mcp
-
-# Install dependencies
+# 1. Clone & install
+git clone https://github.com/sivajitur/running.git
+cd running
 pip install -r requirements.txt
+
+# 2. Add your Strava credentials (see below)
+cp .env.example .env        # then edit .env
+
+# 3. Run the dashboard
+streamlit run app.py        # → http://localhost:8501
 ```
 
-### Configuration
+### Get Strava API credentials
 
-The app supports multiple deployment-friendly configuration methods:
+1. Go to <https://www.strava.com/settings/api>
+2. **Create New App** → set the Authorization Callback Domain to `localhost`
+3. Copy your **Client ID** and **Client Secret** into `.env`:
 
-#### Option 1: Using `.streamlit/secrets.toml` (Recommended)
-
-1. Copy the example file:
-```bash
-cp .streamlit/secrets.toml.example .streamlit/secrets.toml
+```env
+STRAVA_CLIENT_ID=your_client_id
+STRAVA_CLIENT_SECRET=your_client_secret
+PERPLEXITY_API_KEY=your_api_key   # optional — powers the in-app coaching tab
 ```
 
-2. Edit `.streamlit/secrets.toml` and add your credentials:
-```toml
-STRAVA_CLIENT_ID = "your_client_id"
-STRAVA_CLIENT_SECRET = "your_client_secret"
-PERPLEXITY_API_KEY = "your_api_key"  # Optional
+> Prefer Streamlit secrets? Copy `.streamlit/secrets.toml.example` to `.streamlit/secrets.toml` instead — no code changes needed.
+
+### Connect the MCP server to Claude Desktop
+
+Add this to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "marathon-coach": {
+      "command": "python",
+      "args": ["/absolute/path/to/running/mcp_server.py"]
+    }
+  }
+}
 ```
 
-3. Run the app - no code changes needed!
+Restart Claude Desktop, then ask it about your training. It will call `sync_from_strava` and the query tools automatically.
 
-#### Option 2: Environment Variables
+---
 
-```bash
-export STRAVA_CLIENT_ID="your_client_id"
-export STRAVA_CLIENT_SECRET="your_client_secret"
-export PERPLEXITY_API_KEY="your_api_key"  # Optional
-streamlit run app.py
-```
+## 🛠️ Tech stack
 
-#### Option 3: Manual Setup in App
+| Layer | Tools |
+|-------|-------|
+| Language | Python 3.10+ |
+| Dashboard | Streamlit, Plotly, pandas |
+| Data source | Strava REST API (OAuth 2.0) |
+| Persistence | SQLite |
+| AI / agents | Model Context Protocol (FastMCP), Perplexity |
 
-- Just run the app and you'll see an interactive setup page
-- Enter your credentials through the UI
-- No configuration files needed!
+---
 
-### Getting Strava Credentials
+## 🔒 Security & privacy
 
-1. Go to https://www.strava.com/settings/apps
-2. Click "Create New App"
-3. Fill in:
-   - **Name**: Running Analytics
-   - **Category**: Training
-   - **Website**: http://localhost:8501 (or your deployment URL)
-   - **Authorization Callback Domain**: localhost
-4. Copy your **Client ID** and **Client Secret**
+- Secrets live in `.env` / `.streamlit/secrets.toml` — both gitignored, never committed.
+- Your activity data (`running.db`, exports) is gitignored and stays on your machine.
+- OAuth tokens refresh automatically and are never written to the repo.
 
-### Run the Application
-
-```bash
-streamlit run app.py
-```
-
-Then open your browser to `http://localhost:8501`
-
-## 📊 Features
-
-### Data Collection
-- OAuth-based Strava API authentication
-- Automatic token refresh
-- Pagination support for large datasets
-
-### Analysis
-- Daily, weekly, and monthly statistics
-- Filtering by date range, day of week, and distance
-- Comprehensive performance metrics
-
-### AI Insights
-- Perplexity integration for personalized coaching
-- Context-aware questions about your running
-- Pre-built example prompts
-
-### Visualization
-- Interactive charts with Plotly
-- Distance trends over time
-- Heart rate vs distance correlation
-- Distance distribution analysis
-
-## 🔌 Integration Points
-
-### Adding New Data Sources
-1. Create a new client in `data/` (e.g., `garmin_client.py`)
-2. Implement the same interface as `StravaClient`
-3. Add configuration to `config/settings.py`
-
-### Adding New Analysis
-1. Add methods to `analysis/analyzer.py`
-2. Create new visualization component in `ui/components/charts.py`
-3. Add tab to main app in `ui/app.py`
-
-### Customizing UI
-- Modify `ui/components/` for visual changes
-- Update `ui/app.py` for layout changes
-- Edit `config/settings.py` for styling preferences
-
-## 🧪 Usage Examples
-
-### Programmatic Usage
-
-```python
-from src.data import StravaClient, DataProcessor
-from src.analysis import RunningAnalyzer
-
-# Fetch data
-client = StravaClient()
-activities = client.get_activities(months_back=6)
-
-# Process data
-df = DataProcessor.convert_activities_to_dataframe(activities)
-DataProcessor.save_csv(df)
-
-# Analyze
-analyzer = RunningAnalyzer(df)
-stats = analyzer.get_summary_stats()
-print(stats)
-```
-
-### Querying AI
-
-```python
-from src.analysis import PerplexityClient, RunningAnalyzer
-from src.data import DataProcessor
-
-df = DataProcessor.load_csv()
-analyzer = RunningAnalyzer(df)
-context = PerplexityClient.create_context(df, analyzer)
-
-client = PerplexityClient()
-response = client.query("What's my average pace?", context)
-print(response)
-```
-
-## 📦 Dependencies
-
-- **streamlit**: Web UI framework
-- **pandas**: Data manipulation
-- **plotly**: Interactive visualizations
-- **requests**: HTTP client for APIs
-- **python-dotenv**: Environment variable management
-
-## 🔒 Security
-
-- API keys stored in `.env` (never commit this file)
-- OAuth token refresh handled automatically
-- Environment variables validated on startup
-
-## � Deployment
-
-### Streamlit Cloud (Recommended)
-
-1. Push your code to GitHub
-2. Go to https://streamlit.io/cloud
-3. Click "New app" and select your repo
-4. Click "Advanced settings" → "Secrets"
-5. Add your credentials:
-```toml
-STRAVA_CLIENT_ID = "your_client_id"
-STRAVA_CLIENT_SECRET = "your_client_secret"
-```
-6. Deploy!
-
-### Docker
-
-```dockerfile
-FROM python:3.10-slim
-
-WORKDIR /app
-COPY . .
-
-RUN pip install -r requirements.txt
-
-# Set credentials as environment variables
-ENV STRAVA_CLIENT_ID=your_client_id
-ENV STRAVA_CLIENT_SECRET=your_client_secret
-
-CMD ["streamlit", "run", "app.py"]
-```
-
-```bash
-docker build -t running-analytics .
-docker run -p 8501:8501 \
-  -e STRAVA_CLIENT_ID=your_id \
-  -e STRAVA_CLIENT_SECRET=your_secret \
-  running-analytics
-```
-
-### Heroku
-
-```bash
-# Set config variables
-heroku config:set STRAVA_CLIENT_ID="your_client_id"
-heroku config:set STRAVA_CLIENT_SECRET="your_client_secret"
-
-# Deploy
-git push heroku main
-```
-
-### Key Point: No Source Code Changes Needed
-
-All deployment methods use environment variables or secrets - **no .env file or source code modifications required**!
-
-## �📝 Development Guidelines
-
-### Code Style
-- Follow PEP 8
-- Use type hints
-- Docstring every function/class
-
-### Adding Features
-1. Create in appropriate module (config/data/analysis/ui)
-2. Add unit tests
-3. Update README
-4. Import/export in `__init__.py`
-
-### File Organization
-- Keep modules single-responsibility
-- Use `__init__.py` for clean imports
-- Export public API in module `__init__.py`
-
-## 🤝 Contributing
-
-When modifying the code:
-1. Maintain the modular structure
-2. Keep dependencies between layers unidirectional
-3. Add docstrings for public methods
-4. Update this README if adding new features
+---
 
 ## 📄 License
 
-MIT License
-
-## 🆘 Troubleshooting
-
-**401 Unauthorized Error**: Check that your PERPLEXITY_API_KEY is valid
-**Strava API Error**: Verify your Strava credentials and refresh token
-**Data not loading**: Ensure `strava_activities.csv` exists or fetch fresh data
+MIT — see below. Built as a portfolio project to explore Strava data, MCP tooling, and clean Python architecture.
