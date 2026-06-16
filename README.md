@@ -1,8 +1,8 @@
 # 🏃 Running Analytics + AI Marathon Coach
 
-> Turn your Strava history into an interactive analytics dashboard **and** a personal marathon coach you can talk to inside Claude.
 
-This project pulls your running data from the Strava API, stores it locally, visualizes it in a clean Streamlit dashboard, and — the fun part — exposes it to AI as a set of [Model Context Protocol (MCP)](https://modelcontextprotocol.io) tools. Ask Claude *"how's my long-run progression looking for race day?"* and it queries your actual training data before answering.
+
+This project pulls your running data from the Strava API, stores it locally, visualizes it in a clean Streamlit dashboard, and — the fun part — exposes it to AI as a set of [Model Context Protocol (MCP)](https://modelcontextprotocol.io) tools. 
 
 <p align="left">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white">
