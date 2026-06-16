@@ -1,5 +1,6 @@
 # 🏃 Running Analytics + AI Marathon Coach
 
+<img width="1862" height="994" alt="Screenshot 2026-06-15 at 9 42 13 PM" src="https://github.com/user-attachments/assets/55faa579-5584-4ae0-97c0-b99e25ce277a" />
 
 
 This project pulls your running data from the Strava API, stores it locally, visualizes it in a clean Streamlit dashboard, and — the fun part — exposes it to AI as a set of [Model Context Protocol (MCP)](https://modelcontextprotocol.io) tools. 
